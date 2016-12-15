@@ -249,3 +249,30 @@ Now simply create a jail and supply the pkgs.txt file:
 ``iocell create pkglist=/path-to/pkgs.txt tag=myjail``
 
 This will install ``nginx`` and ``tmux`` in the newly created jail.
+
+Using volumes
+-------------
+
+Jails can have shared directories from the host that are implemented using nullfs(5). The idea is based on volumes used in the docker world. Files can also be Volumes and are copied over at jail startup.
+
+The ``volumes`` property has the following syntax:
+    ::
+
+        /source/path(:/destination/path(:mount_options)) /another/source/path...
+
+``source_path`` is the minimum required parameter and causes ``destination_path`` to be the same as ``source_path``, but located within the jail's root path.
+
+All options are separated by a colon and multiple volumes can be specified by whitespace separation.
+All paths must be absolute and therefore start with a slash.
+Optionally comma separated ``mount_options`` can be passed onto the underlying mount command, mostly useful to specify read-only volumes. For files this is done by setting the immutable attribute after copying them into the jail.
+Volumes are only mounted during runtime.
+
+Volumes can be added at creation time:
+
+``iocell create volumes="/path/to/some/jailhost/dir:/destination/within/jail/root /other/jailhost/dir:/dest/in/jail:ro" tag=myjail``
+
+or set as a property later:
+
+``iocell set volumes="/new/path:/same/dir:ro" UUID|TAG``
+
+however the ``volumes`` property cannot be changed while the jail is running.
