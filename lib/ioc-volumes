@@ -18,6 +18,8 @@ __mount_volumes () {
         return
     fi
 
+    echo "  + Mounting Volumes:"
+
     _mountpoint="$(__get_jail_prop mountpoint ${_uuid})"
 
     for _volume in ${volumes} ; do
@@ -77,24 +79,7 @@ __mount_volumes () {
             __print_exit "  ERROR: volume destination must be an existing directory: ${_full_dest}"
         fi
 
-        # prepare mount
-        if [ -z "${_mounts}" ] ; then
-            _mounts="${_source}:${_dest}:${_full_dest}:${_mount_options}"
-        else
-            _mounts=$(printf "%s\n%s:%s:%s:%s" "${_mounts}" "${_source}" "${_dest}" "${_full_dest}" "${_mount_options}")
-        fi
-    done
-
-    echo "  + Mounting Volumes:"
-
-    local IFS=$'\n'
-    for _mount in ${_mounts} ; do
-        _source=$(echo "${_mount}" | cut -d: -f1)
-        _dest=$(echo "${_mount}" | cut -d: -f2)
-        _full_dest=$(echo "${_mount}" | cut -d: -f3)
-        _mount_options=$(echo "${_mount}" | cut -d: -f4)
-        _retval=0
-
+        # finally mount
         if [ -d "${_source}" ] ; then
             mount -t nullfs -o "${_mount_options},late" "${_source}" "${_full_dest}"
             _retval=$?
@@ -106,6 +91,7 @@ __mount_volumes () {
             fi
         fi
 
+        # on mount fail: unmount all volumes and stop jail
         if [ "${_retval}" -eq 0 ] ; then
             _mounted="${_full_dest} ${_mounted}"
             echo "    ${_source} -> ${_dest} (${_mount_options})"
